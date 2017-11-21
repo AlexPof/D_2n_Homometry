@@ -3,7 +3,18 @@
 #include <string.h>
 #include <math.h>
 
-
+/*
+* EnsD2N is the structure definition for subsets of D_2n
+*
+* Each element in the D_2n dihedral group can be written as (g,h) where
+* g is an element of Z_n and h is an element of Z_12.
+* We represent a subset of D_2n by its decomposition on the two cosets
+* (Z_n,1) and (Z_n,h), which are here represented as tables A0 and A1.
+* In addition, we represent a subset of D_2n as a single value valid
+* which is the concatenation of two words of length n in {0,1}, one form
+* each coset.
+*
+*/
 typedef struct EnsD2N {
   int* A0;
   int* A1;

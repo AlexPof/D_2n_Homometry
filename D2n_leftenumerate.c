@@ -3,7 +3,18 @@
 #include <string.h>
 #include <math.h>
 
-
+/*
+* EnsD2N is the structure definition for subsets of D_2n
+*
+* Each element in the D_2n dihedral group can be written as (g,h) where
+* g is an element of Z_n and h is an element of Z_12.
+* We represent a subset of D_2n by its decomposition on the two cosets
+* (Z_n,1) and (Z_n,h), which are here represented as tables A0 and A1.
+* In addition, we represent a subset of D_2n as a single value valid
+* which is the concatenation of two words of length n in {0,1}, one form
+* each coset.
+*
+*/
 typedef struct EnsD2N {
   int* A0;
   int* A1;
@@ -96,6 +107,18 @@ int main(int argc, char *argv[]) {
 ///////////////////////////////////////////////////////
 
 int is_left_homometric(EnsD2N* X,EnsD2N* Y){
+  /*
+  * Function:  is_left_homometric
+  * --------------------
+  * Checks if two D_2n subsets X and Y are left homometric. We check This
+  * by calculating the interval vector of X and Y, and comparing them, since
+  * left homometric sets have identical interval vectors.
+  *
+  * X,Y: the D_2n subsets to be checked
+  *
+  *  returns: True if the subsets X and Y are left homometric,
+  *            False otherwise.
+  */
   int i,j,N;
   int countX,countY;
 
@@ -133,21 +156,35 @@ int is_left_homometric(EnsD2N* X,EnsD2N* Y){
 }
 
 int is_right_translated(EnsD2N* X,EnsD2N* Y){
-  int shift,i,N,c,d;
+  /*
+  * Function:  is_right_translated
+  * --------------------
+  * Checks if two D_2n subsets X and Y are right translates of each other, i.e.
+  * there exists (p,q) in D_2n such that the set {(g,h)(p,q) with (g,h) in X}
+  * is the subset Y.
+  *
+  * X,Y: the D_2n subsets to be checked
+  *
+  *  returns: True if the subsets X and Y are right translates of each other,
+  *            False otherwise.
+  */
+  int p,i,N,c,d;
 
   N=X->N;
-  for(shift=0;shift<N;shift++) {
+  for(p=0;p<N;p++) {
     c=0;
     d=0;
     for(i=0;i<N;i++) {
-      if (X->A0[i] == Y->A0[ mod((i+shift),N)])
+      // This checks the case where (p,q) is such that q is the identity in Z_2
+      if (X->A0[i] == Y->A0[ mod((i+p),N)])
         c++;
-      if (X->A1[i] == Y->A1[ mod((i-shift),N)])
+      if (X->A1[i] == Y->A1[ mod((i-p),N)])
         c++;
 
-      if (X->A0[i] == Y->A1[ mod((i+shift),N)])
+      // This checks the case where (p,q) is such that q is non-trivial in Z_2
+      if (X->A0[i] == Y->A1[ mod((i+p),N)])
         d++;
-      if (X->A1[i] == Y->A0[ mod((i-shift),N)])
+      if (X->A1[i] == Y->A0[ mod((i-p),N)])
         d++;
     }
     if (c==(2*N) || d==(2*N))
@@ -158,19 +195,43 @@ int is_right_translated(EnsD2N* X,EnsD2N* Y){
 }
 
 int is_pureZn(EnsD2N* X) {
+  /*
+  * Function:  is_pureZn
+  * --------------------
+  * Checks if a D_2n subset is a pure Z_n subset, i.e. all elements of the
+  * subset belong to a single coset (Z_n,1) or (Z_n,h).
+  *
+  * X: the D_2n subset to be checked
+  *
+  *  returns: True if the subset is a pure Z_n subset, False otherwise
+  */
   int i,N,c,d;
 
   N=X->N;
   c=0;
   d=0;
   for (i=0;i<N;i++) {
+    // We count the number of elements of the form (g,1) or (g,h)
     c+=X->A0[i];
     d+=X->A1[i];
   }
+  // If one of them is equal to zero, this means that all elements are
+  // either of the form (g,1) or (g,h)
   return (c==0 || d==0);
 }
 
 void initialize_EnsD2N(EnsD2N* ensemble, unsigned long long int a, int N) {
+  /*
+  * Function:  initialize_EnsD2N
+  * --------------------
+  * Initialize a D_2n subset with the given values
+  *
+  * ensemble: the D_2n subset to be initialized
+  * a: the integer representation of the D_2n subset
+  * N: the order n of D_2n
+  *
+  *  returns: None
+  */
   int i,j;
   int countX;
 
@@ -186,6 +247,17 @@ void initialize_EnsD2N(EnsD2N* ensemble, unsigned long long int a, int N) {
 }
 
 void niceprint_EnsD2N(EnsD2N* ensemble) {
+  /*
+  * Function:  niceprint_EnsD2N
+  * --------------------
+  * Print an interpretable version of a D_2n subset
+  *
+  * ensemble: the D_2n subset to be printed
+  *
+  *
+  *  returns: None. Prints an element (g,h) of the subset
+  *           as g+ if h=1, g- otherwise.
+  */
   int i;
 
   printf("{");
@@ -200,7 +272,18 @@ void niceprint_EnsD2N(EnsD2N* ensemble) {
     printf("}\n");
 }
 
-unsigned long long int next_samebits_number(unsigned long long int  x) {
+unsigned long long int next_samebits_number(unsigned long long int x) {
+  /*
+  * Function:  next_samebits_number
+  * --------------------
+  * Given a set of n elements,
+  * produce a new set of n elements. If you start with the
+  * result of next_samebits_number(k)/ and then at each
+  * step apply next_samebits_number to the previous result,
+  * and keep going until a set is obtained containing m as a
+  * member, you will have obtained a set representing all
+  * possible ways of choosing k things from m things.
+  */
   unsigned long long int  smallest, ripple, new_smallest, ones;
 
   smallest     = (x & -x);
@@ -212,15 +295,28 @@ unsigned long long int next_samebits_number(unsigned long long int  x) {
 
 
 int mod(int a, int b) {
+  /*
+  * Function:  mod
+  * --------------------
+  * Arithmetic modulo of a by b
+  *
+  *  returns: the value of mod(a,b).
+  */
   return (a >= 0 ? a % b : b - (-a) % b);
 }
 
-unsigned long long int  power2(unsigned long long int  a) {
+unsigned long long int power2(unsigned long long int  a) {
   unsigned long long int v=1;
   return (v << a);
 }
 
 void binaryprint(unsigned int a,int N) {
+  /*
+  * Function:  binaryprint
+  * --------------------
+  * Print the binary representation of an integer a considered as a word
+  * of length N. For debug purposes.
+  */
   int i;
   for(i=0;i<N;i++)
   printf("%d",(a>>i)&1);
