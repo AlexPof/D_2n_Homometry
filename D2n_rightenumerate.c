@@ -103,6 +103,18 @@ int main(int argc, char *argv[]) {
 ///////////////////////////////////////////////////////
 
 int is_right_homometric(EnsD2N* X,EnsD2N* Y){
+/*
+ * Function:  is_right_homometric 
+ * --------------------
+ * XXX:
+ *    XXXX
+ *
+ *  X: XXX
+ *
+ *  returns: XXX
+ *           XXX
+ *           XXX
+ */
     int i,j,N;
     int countX,countY;
 
