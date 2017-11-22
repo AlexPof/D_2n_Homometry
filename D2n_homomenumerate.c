@@ -25,12 +25,23 @@ typedef struct EnsD2N {
 void initialize_EnsD2N(EnsD2N* ensemble, unsigned long long int a, int N);
 void niceprint_EnsD2N(EnsD2N* ensemble);
 int is_left_homometric(EnsD2N* X,EnsD2N* Y);
+int is_right_homometric(EnsD2N* X,EnsD2N* Y);
+int is_left_translated(EnsD2N* X,EnsD2N* Y);
 int is_right_translated(EnsD2N* X,EnsD2N* Y);
 int is_pureZn(EnsD2N* X);
 int mod(int a, int b);
 unsigned long long int power2(unsigned long long int  a);
 unsigned long long int next_samebits_number(unsigned long long int x);
 void binaryprint(unsigned int a,int N);
+
+/*
+* main takes 2 arguments
+*
+*
+* N: order of the D_2N dihedral group
+* P: cardinality of the subsets to be considered
+*
+*/
 
 int main(int argc, char *argv[]) {
   EnsD2N* ensembles;
@@ -39,23 +50,36 @@ int main(int argc, char *argv[]) {
   unsigned long long int x;
   int i,j,flag;
   int count;
+  int homomtype;
 
   int N,P;
 
-  if (argc<3) {
-    printf("Not enough arguments - Need at least 2\n");
+  if (argc<4) {
+    printf("Not enough arguments - Need at least 3\n");
     exit(1);
   } else {
-    N = atoi(argv[1]);
-    P = atoi(argv[2]);
+    if (strcmp("left",argv[1])==0)
+      homomtype=0;
+    else if (strcmp("right",argv[1])==0)
+      homomtype=1;
+    else {
+      printf("Homometry type should be either left or right\n");
+      exit(1);
+    }
+    N = atoi(argv[2]);
+    P = atoi(argv[3]);
   }
 
   ensembles = (EnsD2N*)malloc(sizeof(EnsD2N));
 
-  /////////////////////////////////
-  //  The enumeration proceeds in two parts:
-  //  - First, we determine a collection of D_2n ensembles that are not related by a right transform of D_2n
-  //    and which are not ensembles of pure Z_n
+  /*
+  * The enumeration proceeds in two parts:
+  *
+  * First, we determine a collection of D_2n ensembles that are
+  * not related by a translate transform of D_2n and which are not ensembles
+  * of pure Z_n
+  *
+  */
 
   printf("Building the collection of D_%d ensembles of cardinality %d...\n",2*N,P);
 
@@ -69,9 +93,16 @@ int main(int argc, char *argv[]) {
         initialize_EnsD2N(ensembles, (1+2*x), N);
       } else {
         flag=0;
+
         for (i=0;i<total_ensembles;i++) {
-          if (is_right_translated(&X,&ensembles[i]))
-            flag=1;
+          switch(homomtype) {
+            case 0:
+              flag=flag || is_right_translated(&X,&ensembles[i]);
+              break;
+            case 1:
+              flag=flag || is_left_translated(&X,&ensembles[i]);
+              break;
+          }
         }
         if (flag==0) {
           total_ensembles++;
@@ -84,14 +115,33 @@ int main(int argc, char *argv[]) {
   }
   printf("Found %d D_%d ensembles of cardinality %d...\n",total_ensembles,2*N,P);
 
-  /////////////////////////////////
-  //  - Then, we determine the left-homometric sets
+  /*
+  * Then we determine the homometric sets by examining
+  * all pair-wise combinations
+  */
 
-  printf("Determining left-homometric D_%d ensembles of cardinality %d...\n",2*N,P);
+  switch(homomtype) {
+    case 0:
+      printf("Determining left-homometric D_%d ensembles of cardinality %d...\n",2*N,P);
+      break;
+    case 1:
+      printf("Determining right-homometric D_%d ensembles of cardinality %d...\n",2*N,P);
+      break;
+  }
+
   count=0;
   for(i=0;i<total_ensembles;i++) {
     for(j=i+1;j<total_ensembles;j++) {
-      if (is_left_homometric(&ensembles[i],&ensembles[j])) {
+      flag=0;
+      switch(homomtype) {
+        case 0:
+          flag = is_left_homometric(&ensembles[i],&ensembles[j]);
+          break;
+        case 1:
+          flag = is_right_homometric(&ensembles[i],&ensembles[j]);
+          break;
+      }
+      if (flag) {
         printf("%llu-%llu\n",ensembles[i].val,ensembles[j].val);
         niceprint_EnsD2N(&ensembles[i]);
         niceprint_EnsD2N(&ensembles[j]);
@@ -100,8 +150,7 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-
-  printf("%d left homometric ensembles found\n", count);
+  exit(0);
 }
 
 ///////////////////////////////////////////////////////
@@ -111,8 +160,8 @@ int is_left_homometric(EnsD2N* X,EnsD2N* Y){
   * Function:  is_left_homometric
   * --------------------
   * Checks if two D_2n subsets X and Y are left homometric. We check This
-  * by calculating the interval vector of X and Y, and comparing them, since
-  * left homometric sets have identical interval vectors.
+  * by calculating the left interval vector of X and Y, and comparing them, since
+  * left homometric sets have identical left interval vectors.
   *
   * X,Y: the D_2n subsets to be checked
   *
@@ -154,6 +203,94 @@ int is_left_homometric(EnsD2N* X,EnsD2N* Y){
 
   return 1;
 }
+
+int is_right_homometric(EnsD2N* X,EnsD2N* Y){
+  /*
+  * Function:  is_right_homometric
+  * --------------------
+  * Checks if two D_2n subsets X and Y are right homometric. We check This
+  * by calculating the right interval vector of X and Y, and comparing them,
+  * since right homometric sets have identical right interval vectors.
+  *
+  * X,Y: the D_2n subsets to be checked
+  *
+  *  returns: True if the subsets X and Y are right homometric,
+  *            False otherwise.
+  */
+
+  int i,j,N;
+  int countX,countY;
+
+  N=X->N;
+  for(i=0;i<N;i++) {
+    countX=0;
+    countY=0;
+
+    for(j=0;j<N;j++) {
+      countX+= (X->A0[j]) & (X->A0[ mod((j+i),N) ]);
+      countX+= (X->A1[j]) & (X->A1[ mod((j+i),N) ]);
+
+      countY+= (Y->A0[j]) & (Y->A0[ mod((j+i),N) ]);
+      countY+= (Y->A1[j]) & (Y->A1[ mod((j+i),N) ]);
+    }
+    if (countX!=countY)
+      return 0;
+  }
+
+  for(i=0;i<N;i++) {
+    countX=0;
+    countY=0;
+
+    for(j=0;j<N;j++) {
+      countX+= (X->A0[j]) & (X->A1[ mod((j+i),N) ]);
+
+      countY+= (Y->A0[j]) & (Y->A1[ mod((j+i),N) ]);
+    }
+    if (countX!=countY)
+      return 0;
+  }
+
+
+  return 1;
+}
+
+int is_left_translated(EnsD2N* X,EnsD2N* Y){
+  /*
+  * Function:  is_left_translated
+  * --------------------
+  * Checks if two D_2n subsets X and Y are left translates of each other, i.e.
+  * there exists (p,q) in D_2n such that the set {(p,q)(g,h) with (g,h) in X}
+  * is the subset Y.
+  *
+  * X,Y: the D_2n subsets to be checked
+  *
+  *  returns: True if the subsets X and Y are left translates of each other,
+  *            False otherwise.
+  */
+  int p,i,N,c,d;
+
+  N=X->N;
+  for(p=0;p<N;p++) {
+    c=0;
+    d=0;
+    for(i=0;i<N;i++) {
+      if (X->A0[i] == Y->A0[ mod((i+p),N)])
+        c++;
+      if (X->A1[i] == Y->A1[ mod((i+p),N)])
+        c++;
+
+      if (X->A0[i] == Y->A1[ mod((p-i),N)])
+        d++;
+      if (X->A1[i] == Y->A0[ mod((p-i),N)])
+        d++;
+    }
+    if (c==(2*N) || d==(2*N))
+      return 1;
+  }
+
+  return 0;
+}
+
 
 int is_right_translated(EnsD2N* X,EnsD2N* Y){
   /*
