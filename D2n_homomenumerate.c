@@ -35,9 +35,9 @@ unsigned long long int next_samebits_number(unsigned long long int x);
 void binaryprint(unsigned int a,int N);
 
 /*
-* main takes 2 arguments
+* main takes 3 arguments
 *
-*
+* homometry_type: 'left' or 'right'
 * N: order of the D_2N dihedral group
 * P: cardinality of the subsets to be considered
 *
