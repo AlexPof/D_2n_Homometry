@@ -23,7 +23,7 @@ typedef struct EnsD2N {
 } EnsD2N;
 
 void initialize_EnsD2N(EnsD2N* ensemble, unsigned long long int a, int N);
-void niceprint_EnsD2N(EnsD2N* ensemble);
+char* niceprint_EnsD2N(EnsD2N* ensemble);
 int is_left_homometric(EnsD2N* X,EnsD2N* Y);
 int is_right_homometric(EnsD2N* X,EnsD2N* Y);
 int is_left_translated(EnsD2N* X,EnsD2N* Y);
@@ -40,7 +40,7 @@ void binaryprint(unsigned int a,int N);
 * homometry_type: 'left' or 'right'
 * N: order of the D_2N dihedral group
 * P: cardinality of the subsets to be considered
-*
+* output_file: the output for the enumeration
 */
 
 int main(int argc, char *argv[]) {
@@ -51,23 +51,28 @@ int main(int argc, char *argv[]) {
   int i,j,flag;
   int count;
   int homomtype;
+  FILE* output_file=NULL;
 
   int N,P;
 
   if (argc<4) {
-    printf("Not enough arguments - Need at least 3\n");
+    printf("Not enough arguments - Need at least 4\n");
     exit(1);
-  } else {
-    if (strcmp("left",argv[1])==0)
-      homomtype=0;
-    else if (strcmp("right",argv[1])==0)
-      homomtype=1;
-    else {
-      printf("Homometry type should be either left or right\n");
-      exit(1);
-    }
-    N = atoi(argv[2]);
-    P = atoi(argv[3]);
+  }
+  if (strcmp("left",argv[1])==0)
+    homomtype=0;
+  else if (strcmp("right",argv[1])==0)
+    homomtype=1;
+  else {
+    printf("Homometry type should be either left or right\n");
+    exit(1);
+  }
+  N = atoi(argv[2]);
+  P = atoi(argv[3]);
+  output_file=fopen(argv[4],"w");
+  if (output_file==NULL) {
+    printf("Error creating the output file...\n");
+    exit(1);
   }
 
   ensembles = (EnsD2N*)malloc(sizeof(EnsD2N));
@@ -142,14 +147,15 @@ int main(int argc, char *argv[]) {
           break;
       }
       if (flag) {
-        printf("%llu-%llu\n",ensembles[i].val,ensembles[j].val);
-        niceprint_EnsD2N(&ensembles[i]);
-        niceprint_EnsD2N(&ensembles[j]);
-        printf("*******************\n");
+        fprintf(output_file,"%llu-%llu\n",ensembles[i].val,ensembles[j].val);
+        fprintf(output_file,"%s",niceprint_EnsD2N(&ensembles[i]));
+        fprintf(output_file,"%s",niceprint_EnsD2N(&ensembles[j]));
+        fprintf(output_file,"========\n");
         count++;
       }
     }
   }
+  fclose(output_file);
   exit(0);
 }
 
@@ -383,7 +389,7 @@ void initialize_EnsD2N(EnsD2N* ensemble, unsigned long long int a, int N) {
   }
 }
 
-void niceprint_EnsD2N(EnsD2N* ensemble) {
+char* niceprint_EnsD2N(EnsD2N* ensemble) {
   /*
   * Function:  niceprint_EnsD2N
   * --------------------
@@ -396,17 +402,20 @@ void niceprint_EnsD2N(EnsD2N* ensemble) {
   *           as g+ if h=1, g- otherwise.
   */
   int i;
+  char str_rep[100]="";
+  char* temp_str;
 
-  printf("{");
+  snprintf(str_rep, sizeof(str_rep), "%s%s", str_rep, "{");
   for(i=0;i<ensemble->N;i++) {
     if (ensemble->A0[i])
-      printf("%d+,",i);
+      snprintf(str_rep, sizeof(str_rep), "%s%d+,", str_rep, i);
   }
   for(i=0;i<ensemble->N;i++) {
     if (ensemble->A1[i])
-      printf("%d-,",i);
+      snprintf(str_rep, sizeof(str_rep), "%s%d-,", str_rep, i);
   }
-    printf("}\n");
+  snprintf(str_rep, sizeof(str_rep), "%s%s", str_rep, "}\n");
+  return str_rep;
 }
 
 unsigned long long int next_samebits_number(unsigned long long int x) {
