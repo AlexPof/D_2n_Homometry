@@ -22,6 +22,7 @@ typedef struct EnsD2N {
   int N;
 } EnsD2N;
 
+void enumerate_homometric(int homomtype, int N, int P, FILE* output_file);
 void initialize_EnsD2N(EnsD2N* ensemble, unsigned long long int a, int N);
 char* niceprint_EnsD2N(EnsD2N* ensemble);
 int is_left_homometric(EnsD2N* X,EnsD2N* Y);
@@ -44,16 +45,8 @@ void binaryprint(unsigned int a,int N);
 */
 
 int main(int argc, char *argv[]) {
-  EnsD2N* ensembles;
-  int total_ensembles=0;
-  EnsD2N X;
-  unsigned long long int x;
-  int i,j,flag;
-  int count;
-  int homomtype;
+  int N,P,homomtype;
   FILE* output_file=NULL;
-
-  int N,P;
 
   if (argc<4) {
     printf("Not enough arguments - Need at least 4\n");
@@ -75,88 +68,88 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  ensembles = (EnsD2N*)malloc(sizeof(EnsD2N));
+  enumerate_homometric(homomtype, N, P, output_file);
 
-  /*
-  * The enumeration proceeds in two parts:
-  *
-  * First, we determine a collection of D_2n ensembles that are
-  * not related by a translate transform of D_2n and which are not ensembles
-  * of pure Z_n
-  *
-  */
-
-  printf("Building the collection of D_%d ensembles of cardinality %d...\n",2*N,P);
-
-  x=power2(P-1)-1;
-  while(x<power2(2*N-1)) {
-    initialize_EnsD2N(&X, (1+2*x), N);
-    if (!is_pureZn(&X)) {
-      if (total_ensembles==0) {
-        total_ensembles++;
-        ensembles = (EnsD2N*)malloc(sizeof(EnsD2N));
-        initialize_EnsD2N(ensembles, (1+2*x), N);
-      } else {
-        flag=0;
-
-        for (i=0;i<total_ensembles;i++) {
-          switch(homomtype) {
-            case 0:
-              flag=flag || is_right_translated(&X,&ensembles[i]);
-              break;
-            case 1:
-              flag=flag || is_left_translated(&X,&ensembles[i]);
-              break;
-          }
-        }
-        if (flag==0) {
-          total_ensembles++;
-          ensembles = (EnsD2N*)realloc(ensembles,total_ensembles*sizeof(EnsD2N));
-          initialize_EnsD2N(&ensembles[total_ensembles-1], (1+2*x), N);
-        }
-      }
-    }
-    x = next_samebits_number(x);
-  }
-  printf("Found %d D_%d ensembles of cardinality %d...\n",total_ensembles,2*N,P);
-
-  /*
-  * Then we determine the homometric sets by examining
-  * all pair-wise combinations
-  */
-
-  switch(homomtype) {
-    case 0:
-      printf("Determining left-homometric D_%d ensembles of cardinality %d...\n",2*N,P);
-      break;
-    case 1:
-      printf("Determining right-homometric D_%d ensembles of cardinality %d...\n",2*N,P);
-      break;
-  }
-
-  count=0;
-  for(i=0;i<total_ensembles;i++) {
-    for(j=i+1;j<total_ensembles;j++) {
-      flag=0;
-      switch(homomtype) {
-        case 0:
-          flag = is_left_homometric(&ensembles[i],&ensembles[j]);
-          break;
-        case 1:
-          flag = is_right_homometric(&ensembles[i],&ensembles[j]);
-          break;
-      }
-      if (flag) {
-        fprintf(output_file,"%llu-%llu\n",ensembles[i].val,ensembles[j].val);
-        fprintf(output_file,"%s",niceprint_EnsD2N(&ensembles[i]));
-        fprintf(output_file,"%s",niceprint_EnsD2N(&ensembles[j]));
-        fprintf(output_file,"========\n");
-        count++;
-      }
-    }
-  }
   fclose(output_file);
   exit(0);
+}
+
+void enumerate_homometric(int homomtype, int N, int P, FILE* output_file) {
+    int total_ensembles=0;
+    int i,j,flag,count;
+    unsigned long long int x;
+    EnsD2N* ensembles;
+    EnsD2N X;
+
+    /*
+    * The enumeration proceeds in two parts:
+    *
+    * First, we determine a collection of D_2n ensembles that are
+    * not related by a translate transform of D_2n and which are not ensembles
+    * of pure Z_n
+    *
+    */
+
+    printf("Building the collection of D_%d subsets of cardinality %d...\n",2*N,P);
+
+    x=power2(P-1)-1;
+    while(x<power2(2*N-1)) {
+      initialize_EnsD2N(&X, (1+2*x), N);
+      if (!is_pureZn(&X)) {
+        // If this is the first subset found, we initialize the ensemble table
+        if (total_ensembles==0) {
+          total_ensembles++;
+          ensembles = (EnsD2N*)malloc(sizeof(EnsD2N));
+          initialize_EnsD2N(ensembles, (1+2*x), N);
+        } else {
+          // Otherwise, we need to check if the subset is a left/right translate
+          // of an existing subset in the table.
+
+          flag=0;
+          for (i=0;i<total_ensembles;i++) {
+            switch(homomtype) {
+              case 0:
+                flag = flag || is_right_translated(&X,&ensembles[i]);
+                break;
+              case 1:
+                flag = flag || is_left_translated(&X,&ensembles[i]);
+                break;
+            }
+          }
+          // If not, we add it to the table, and we also check if it is
+          // left/right homometric to one of the existing subsets.
+          if (flag==0) {
+
+            // Homometry check
+            for(i=0;i<total_ensembles;i++) {
+              flag=0;
+              switch(homomtype) {
+                case 0:
+                  flag = is_left_homometric(&ensembles[i],&X);
+                  break;
+                case 1:
+                  flag = is_right_homometric(&ensembles[i],&X);
+                  break;
+              }
+              if (flag) {
+                fprintf(output_file,"%llu-%llu\n",ensembles[i].val,ensembles[j].val);
+                fprintf(output_file,"%s",niceprint_EnsD2N(&ensembles[i]));
+                fprintf(output_file,"%s",niceprint_EnsD2N(&ensembles[j]));
+                fprintf(output_file,"========\n");
+                count++;
+              }
+            }
+
+            // Updating the subset table
+            total_ensembles++;
+            ensembles = (EnsD2N*)realloc(ensembles,total_ensembles*sizeof(EnsD2N));
+            initialize_EnsD2N(&ensembles[total_ensembles-1], (1+2*x), N);
+          }
+        }
+      }
+      x = next_samebits_number(x);
+    }
+    printf("Found %d D_%d subsets of cardinality %d...\n",total_ensembles,2*N,P);
 }
 
 ///////////////////////////////////////////////////////
