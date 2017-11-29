@@ -1,6 +1,8 @@
 # D_2n Homometry
 
-C algorithms for brute-force enumeration of homometric sets in the dihedral groups D_2n
+C algorithm for brute-force enumeration of homometric sets in the dihedral groups D_2n
+
+See [the paper 'Homometry in the Dihedral Groups: Lifting Sets from Zn to Dn' by G. Genuys and A. Popoff](https://link.springer.com/chapter/10.1007/978-3-319-71827-9_4) for more theoretical information.
 
 ==========
 
