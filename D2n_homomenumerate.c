@@ -24,7 +24,7 @@ typedef struct EnsD2N {
 
 void enumerate_homometric(int homomtype, int N, int P, FILE* output_file);
 void initialize_EnsD2N(EnsD2N* ensemble, unsigned long long int a, int N);
-char* niceprint_EnsD2N(EnsD2N* ensemble);
+void niceprint_EnsD2N(EnsD2N* ensemble, char* str_rep);
 int is_left_homometric(EnsD2N* X,EnsD2N* Y);
 int is_right_homometric(EnsD2N* X,EnsD2N* Y);
 int is_left_translated(EnsD2N* X,EnsD2N* Y);
@@ -78,6 +78,7 @@ void enumerate_homometric(int homomtype, int N, int P, FILE* output_file) {
     int total_ensembles=0;
     int i,j,flag,count;
     unsigned long long int x;
+    char str_rep[200]="";
     EnsD2N* ensembles;
     EnsD2N X;
 
@@ -132,10 +133,11 @@ void enumerate_homometric(int homomtype, int N, int P, FILE* output_file) {
                   break;
               }
               if (flag) {
-                fprintf(output_file,"%llu-%llu\n",ensembles[i].val,ensembles[j].val);
-                fprintf(output_file,"%s",niceprint_EnsD2N(&ensembles[i]));
-                fprintf(output_file,"%s",niceprint_EnsD2N(&ensembles[j]));
-                fprintf(output_file,"========\n");
+                fprintf(output_file,"%llu-%llu\n",ensembles[i].val,X.val);
+                niceprint_EnsD2N(&ensembles[i],str_rep);
+                fprintf(output_file,"%s\n",str_rep);
+                niceprint_EnsD2N(&X,str_rep);
+                fprintf(output_file,"%s\n========\n",str_rep);
                 count++;
               }
             }
@@ -382,33 +384,36 @@ void initialize_EnsD2N(EnsD2N* ensemble, unsigned long long int a, int N) {
   }
 }
 
-char* niceprint_EnsD2N(EnsD2N* ensemble) {
+void niceprint_EnsD2N(EnsD2N* ensemble, char* str_rep) {
   /*
   * Function:  niceprint_EnsD2N
   * --------------------
   * Print an interpretable version of a D_2n subset
   *
   * ensemble: the D_2n subset to be printed
+  * str_rep: the destination string. Prints an element (g,h) of the subset
+  *          as g+ if h=1, g- otherwise.
   *
   *
-  *  returns: None. Prints an element (g,h) of the subset
-  *           as g+ if h=1, g- otherwise.
+  *  returns: None.
+  *
   */
   int i;
-  char str_rep[100]="";
   char* temp_str;
 
-  snprintf(str_rep, sizeof(str_rep), "%s%s", str_rep, "{");
+  strcpy(str_rep,"");
+  // 200 is the max size of the string
+  // Not the better way to code it, though
+  snprintf(str_rep, 200, "%s%s", str_rep, "{");
   for(i=0;i<ensemble->N;i++) {
     if (ensemble->A0[i])
-      snprintf(str_rep, sizeof(str_rep), "%s%d+,", str_rep, i);
+      snprintf(str_rep, 200, "%s%d+,", str_rep, i);
   }
   for(i=0;i<ensemble->N;i++) {
     if (ensemble->A1[i])
-      snprintf(str_rep, sizeof(str_rep), "%s%d-,", str_rep, i);
+      snprintf(str_rep, 200, "%s%d-,", str_rep, i);
   }
-  snprintf(str_rep, sizeof(str_rep), "%s%s", str_rep, "}\n");
-  return str_rep;
+  snprintf(str_rep, 200, "%s%s", str_rep, "}");
 }
 
 unsigned long long int next_samebits_number(unsigned long long int x) {
