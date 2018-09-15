@@ -1,16 +1,17 @@
 # D_2n Homometry
 
-C algorithms for brute-force enumeration of homometric sets in the dihedral groups D_2n
+C algorithm for brute-force enumeration of homometric sets in the dihedral groups D_2n
+
+See the paper *Genuys G., Popoff A. (2017) Homometry in the Dihedral Groups: Lifting Sets from  ℤn to  Dn. In: Agustín-Aquino O., Lluis-Puebla E., Montiel M. (eds) Mathematics and Computation in Music. MCM 2017. Lecture Notes in Computer Science, vol 10527. Springer, Cham* for more theoretical information.
 
 ==========
 
-Start the C program:
+Compile the C program with gcc and start:
 
-    >>> ./D2n_homomenumerate homometry_type n p output_file
+    >>> ./D2n_homomenumerate n p output_file
 
 where
 
-  * *homometry_type* is either *left* or *right*
   * *n* is an integer defining the order of the D_2n dihedral group
   * *p* is an integer defining the cardinality of the subsets of D_2n to be
         examined.
@@ -18,20 +19,20 @@ where
 
 For example:
 
-    >>> ./D2n_homomenumerate left 12 5 output.txt
-    Building the collection of D_24 ensembles of cardinality 5...
-    Found 1705 D_24 ensembles of cardinality 5...
-    Determining left-homometric D_24 ensembles of cardinality 5...
+    >>> ./D2n_homomenumerate 12 5 output.txt
 
 Use the python script to count the unique homometric n-uples:
 
-    >>> python D2n_homomcounts.py
+    >>> python D2n_homomcounts.py output.txt
 
 With the above example:
 
     >>> python D2n_homomcounts.py
-    Found 10 unique homometric sets:
-    [[20753, 82193], [41233, 164113], [86081, 267269, 267521], [143425, 268417], [172097, 533509, 533761], [200769, 268305], [266499, 266625], [532739, 532865], [1065219, 1065345], [2130179, 2130305]]
-    Counts by n-uples:
-      Number of 2-uples: 8
-      Number of 3-uples: 2
+    # of left homometric subsets
+    2-uples: 8
+    3-uples: 2
+    # of simultaneous left and right homometric subsets
+    2-uples: 8
+    3-uples: 2
+
+The zip file *partial_results.zip* contains a partial enumeration of subsets of cardinality *p* in the dihedral groups D_2n, for *p=4,5,6,7* and n from 8 to 18.

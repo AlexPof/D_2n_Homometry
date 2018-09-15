@@ -1,52 +1,54 @@
-# -*- coding: cp1252 -*-
+import sys
 import numpy as np
 
-######################################
+h=[]
+hboth=[]
+with open(sys.argv[1],"r") as f:
+    t=f.readline()
+    while(not t==""):
+        t=f.readline()
+        hashs = t.rstrip().replace(" ","").split("-")
+        sets = f.readline(),f.readline()
+        sets = list(zip(hashs,sets))
+        t = f.readline()
+        flag=0
+        for y in h:
+            if (sets[0] in y):
+                if not sets[1] in y:
+                    y.append(sets[1])
+                flag=1
+                break
+            elif (sets[1] in y):
+                if not sets[0] in y:
+                    y.append(sets[0])
+                flag=1
+                break
+        if not flag:
+            h.append(sets)
 
-def get_homomsets(filename):
-    """Quick an dirty function for reading an output file from the C
-    enumeration program and listing the homometric sets.
 
-    Parameters
-    ----------
-    filename : the name of the output file from the C program
-
-    Returns
-    -------
-    The list of unique homometric n-uples
-    """
-    homomsets=[]
-    with open(filename,"r") as f:
-        l = f.readline()
-        while(l):
-            x,y = l.rstrip().split("-")
-            x=int(x)
-            y=int(y)
-            f.readline()
-            f.readline()
-            f.readline()
-            l = f.readline()
+        if "Right homometric" in t:
             flag=0
-            for i,theset in enumerate(homomsets):
-                if (x in theset) and not (y in theset):
+            for y in hboth:
+                if (sets[0] in y):
+                    if not sets[1] in y:
+                        y.append(sets[1])
                     flag=1
-                    homomsets[i].append(y)
-                if (y in theset) and not (x in theset):
+                    break
+                elif (sets[1] in y):
+                    if not sets[0] in y:
+                        y.append(sets[0])
                     flag=1
-                    homomsets[i].append(x)
-                if (y in theset) and (x in theset):
-                  flag=1
+                    break
             if not flag:
-                homomsets.append([x,y])
-    return homomsets
+                hboth.append(sets)
+        t=f.readline()
 
-
-######################################
-
-homomsets = get_homomsets("./output.txt")
-print "Found {} unique homometric sets:".format(len(homomsets))
-print homomsets
-print "Counts by n-uples:"
-val,counts = np.unique([len(x) for x in homomsets],return_counts=True)
-for a,b in zip(val,counts):
-    print "  Number of {}-uples: {}".format(a,b)
+print("# of left homometric subsets")
+vals,counts = np.unique([len(x) for x in h],return_counts=True)
+for x,y in zip(vals,counts):
+    print("{}-uples: {}".format(x,y))
+print("# of simultaneous left and right homometric subsets")
+vals,counts = np.unique([len(x) for x in hboth],return_counts=True)
+for x,y in zip(vals,counts):
+    print("{}-uples: {}".format(x,y))
